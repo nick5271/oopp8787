@@ -22,6 +22,10 @@
   const limit = kind => kind === 'speed' ? 20 : 100;
   const waveSize = () => 7 + Math.min(state.wave, 50);
   let health = maxHealth(), enemies = [], bullets = [], particles = [], spawned = 0, defeated = 0;
+  window.addEventListener('deadlight-background-change', ({detail}) => {
+    const dy = detail.next - detail.previous;
+    for (const entity of [...enemies, ...bullets, ...particles]) entity.y += dy;
+  });
   let spawnTimer = .6, shootTimer = 0, supportTimer = 0, flash = 0, recovery = 0, elapsed = 0;
   function save() {
     state.savedAt = Date.now();
@@ -82,7 +86,7 @@
     spawnTimer -= dt; shootTimer -= dt;
     if (spawned < waveSize() && spawnTimer <= 0) {
       const hp = 28 + state.wave * 9;
-      enemies.push({x:1230,y:350,hp,max:hp,speed:18+Math.min(40,state.wave*1.2)+Math.random()*12,phase:Math.random()*6});
+      enemies.push({x:1230,y:window.deadlightScene.groundY(),hp,max:hp,speed:18+Math.min(40,state.wave*1.2)+Math.random()*12,phase:Math.random()*6});
       spawned++; spawnTimer = Math.max(.45, 2.4-state.wave*.06);
     }
     if (enemies.length && shootTimer <= 0) {
@@ -93,7 +97,7 @@
     for (const b of bullets) {
       b.x += 720 * dt;
       const target = enemies.filter(e => e.x >= b.x-720*dt-15 && e.x <= b.x+15).sort((a,c)=>a.x-c.x)[0];
-      if (target) { target.hp -= b.damage; b.x = 1400; burst(target.x,320,'#d6c484',3); }
+      if (target) { target.hp -= b.damage; b.x = 1400; burst(target.x,b.y,'#d6c484',3); }
     }
     bullets = bullets.filter(b=>b.x < 1250);
     enemies = enemies.filter(e => { if (e.hp <= 0) { eliminate(e); return false; } return true; });
@@ -122,6 +126,8 @@
     else rect(x-7,y-60,3,3,'#d9c581');
   }
   function draw() {
+    const ground = window.deadlightScene.groundY();
+    if (!window.deadlightScene.draw()) {
     const sky=ctx.createLinearGradient(0,0,0,460);sky.addColorStop(0,'#152426');sky.addColorStop(1,'#555a3a');ctx.fillStyle=sky;ctx.fillRect(0,0,1200,460);
     ctx.fillStyle='#c9d39c';ctx.beginPath();ctx.arc(920,84,27,0,Math.PI*2);ctx.fill();
     for(let i=0;i<17;i++) { const x=i*83-25,h=70+(i*37%115);rect(x,290-h,62,h,'#23302c');rect(x+10,290-h+14,5,8,'#657053');rect(x+32,290-h+35,6,8,'#556347'); }
@@ -130,14 +136,15 @@
     rect(0,230,155,125,'#3d4a38');rect(12,241,125,75,'#1d2924');rect(20,250,75,52,'#97a16c');rect(27,257,60,38,'#536348');
     rect(0,220,168,12,'#6e7c50');rect(153,234,12,120,'#65724b');
     ctx.fillStyle='#bbcca0';ctx.font='11px monospace';ctx.fillText('SAFE ZONE 07',18,339);
-    rect(270,285,15,70,'#7e8158');rect(261,303,31,9,'#a29460');rect(261,329,31,9,'#a29460');
-    if (!window.deadlightHero.draw()) person(193,350,false,0);
+    }
+    rect(270,ground-65,15,70,'#7e8158');rect(261,ground-47,31,9,'#a29460');rect(261,ground-21,31,9,'#a29460');
+    if (!window.deadlightHero.draw()) person(193,ground,false,0);
     for(const e of enemies){person(e.x,e.y,true,e.phase);rect(e.x-17,e.y-84,35,3,'#3d4736');rect(e.x-17,e.y-84,35*e.hp/e.max,3,'#b1bd72');}
     for(const b of bullets)rect(b.x,b.y,12,2,'#f5d995');
     for(const p of particles)rect(p.x,p.y,3,3,p.color);
-    if(flash>0){ctx.fillStyle=`rgba(225,234,184,${flash})`;ctx.fillRect(0,0,1200,460);}
-    if(recovery>0){rect(0,0,1200,460,'#18221bbb');ctx.fillStyle='#ecdca5';ctx.font='26px system-ui';ctx.textAlign='center';ctx.fillText(`防線修復中 · ${Math.ceil(recovery)} 秒`,600,225);ctx.textAlign='left';}
-    ctx.fillStyle='#a0b38a';ctx.font='10px monospace';ctx.fillText('EAST PERIMETER // AUTOMATED DEFENSE',24,419);
+    if(flash>0){ctx.fillStyle=`rgba(225,234,184,${flash})`;ctx.fillRect(0,0,canvas.width,canvas.height);}
+    if(recovery>0){rect(0,0,canvas.width,canvas.height,'#18221bbb');ctx.fillStyle='#ecdca5';ctx.font='26px system-ui';ctx.textAlign='center';ctx.fillText(`防線修復中 · ${Math.ceil(recovery)} 秒`,canvas.width/2,canvas.height/2);ctx.textAlign='left';}
+    ctx.fillStyle='#a0b38a';ctx.font='10px monospace';ctx.fillText('EAST PERIMETER // AUTOMATED DEFENSE',24,canvas.height-41);
   }
   let last=performance.now(),uiTime=0,saveTime=0;
   function frame(now){const dt=Math.min(.1,(now-last)/1000);last=now;window.deadlightHero.update(dt);tick(dt);

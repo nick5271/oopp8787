@@ -5,7 +5,8 @@
   const status = document.getElementById('hero-status');
   const input = document.getElementById('hero-texture');
   const ctx = document.getElementById('game').getContext('2d');
-  const SCALE = .8, X = 193, Y = 350;
+  const SCALE = .8, X = 193;
+  const groundY = () => window.deadlightScene.groundY();
   let actor = null, generation = 0;
   function build(texture) {
     const atlas = new spine.TextureAtlas(window.DEADLIGHT_HERO_DATA.atlas);
@@ -91,14 +92,14 @@
       actor.skeleton.update(dt); actor.animation.update(dt); pose();
     },
     fire() {
-      if (!actor) return { x:235, y:320 };
+      if (!actor) return { x:235, y:groundY()-30 };
       actor.firing = .4; actor.animation.setAnimation(0, '射擊', false); pose();
       const muzzle = actor.skeleton.findBone('fire_w_e_01').appliedPose;
-      return { x: X + muzzle.worldX * SCALE, y: Y - muzzle.worldY * SCALE };
+      return { x: X + muzzle.worldX * SCALE, y: groundY() - muzzle.worldY * SCALE };
     },
     draw() {
       if (!actor) return false;
-      ctx.save(); ctx.translate(X,Y); ctx.scale(SCALE,-SCALE); ctx.imageSmoothingEnabled = false;
+      ctx.save(); ctx.translate(X,groundY()); ctx.scale(SCALE,-SCALE); ctx.imageSmoothingEnabled = false;
       actor.renderer.draw(actor.skeleton); ctx.restore(); return true;
     }
   };
