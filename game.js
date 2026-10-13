@@ -86,8 +86,9 @@
       spawned++; spawnTimer = Math.max(.45, 2.4-state.wave*.06);
     }
     if (enemies.length && shootTimer <= 0) {
-      bullets.push({x:235,y:320,damage:damage()}); shootTimer = interval();
-      burst(235,320,'#f4cd79',2);
+      const muzzle = window.deadlightHero.fire();
+      bullets.push({...muzzle,damage:damage()}); shootTimer = interval();
+      burst(muzzle.x,muzzle.y,'#f4cd79',2);
     }
     for (const b of bullets) {
       b.x += 720 * dt;
@@ -130,7 +131,7 @@
     rect(0,220,168,12,'#6e7c50');rect(153,234,12,120,'#65724b');
     ctx.fillStyle='#bbcca0';ctx.font='11px monospace';ctx.fillText('SAFE ZONE 07',18,339);
     rect(270,285,15,70,'#7e8158');rect(261,303,31,9,'#a29460');rect(261,329,31,9,'#a29460');
-    person(193,350,false,0);
+    if (!window.deadlightHero.draw()) person(193,350,false,0);
     for(const e of enemies){person(e.x,e.y,true,e.phase);rect(e.x-17,e.y-84,35,3,'#3d4736');rect(e.x-17,e.y-84,35*e.hp/e.max,3,'#b1bd72');}
     for(const b of bullets)rect(b.x,b.y,12,2,'#f5d995');
     for(const p of particles)rect(p.x,p.y,3,3,p.color);
@@ -139,7 +140,7 @@
     ctx.fillStyle='#a0b38a';ctx.font='10px monospace';ctx.fillText('EAST PERIMETER // AUTOMATED DEFENSE',24,419);
   }
   let last=performance.now(),uiTime=0,saveTime=0;
-  function frame(now){const dt=Math.min(.1,(now-last)/1000);last=now;tick(dt);
+  function frame(now){const dt=Math.min(.1,(now-last)/1000);last=now;window.deadlightHero.update(dt);tick(dt);
     for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=160*dt;p.life-=dt;}particles=particles.filter(p=>p.life>0);
     draw();uiTime+=dt;saveTime+=dt;if(uiTime>.15){updateUI();uiTime=0;}if(saveTime>5){save();saveTime=0;}requestAnimationFrame(frame);
   }
